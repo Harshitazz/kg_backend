@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+DEPLOYMENT.md
+QUICK_DEPLOY.md
+QUICK_START.md
+
+# Deployment files
+cloudbuild.yaml
+azure-container-app.yaml
+deploy-*.sh
+
+# Local files
+uploads/
+*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
