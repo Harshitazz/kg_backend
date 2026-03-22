@@ -57,7 +57,7 @@ if not allowed_origins:
     allowed_origins = [
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://kq-frontend-one.vercel.app/graph",
+        "https://kq-frontend-one.vercel.app",
     ]
 
 logging.info(f"CORS allowed origins: {allowed_origins}")
