@@ -7,7 +7,7 @@ import logging
 import dotenv
 dotenv.load_dotenv()
 
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from auth import get_current_user
 from config import get_settings
 from services.pdf_service import (
@@ -100,14 +100,14 @@ async def startup_event():
         logging.error("Settings not loaded — skipping initialization")
         return
     
-    if not settings.groq_api_key:
-        logging.error("GROQ_API_KEY missing — LLM not initialized")
+    if not settings.gemini_api_key:
+        logging.error("GEMINI_API_KEY missing — LLM not initialized")
         return
 
     try:
-        llm = ChatGroq(
-            model="llama-3.3-70b-versatile",
-            groq_api_key=settings.groq_api_key,
+        llm = ChatGoogleGenerativeAI(
+            model=settings.gemini_model,
+            google_api_key=settings.gemini_api_key,
             temperature=0.9,
             max_tokens=1024,
         )

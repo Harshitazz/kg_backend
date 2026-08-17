@@ -14,7 +14,8 @@ class Settings:
     
     def __init__(self):
         # Required settings
-        self.groq_api_key = os.getenv("GROQ_API_KEY", "")
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+        self.gemini_model=os.getenv("GEMINI_MODEL","")
         self.clerk_secret_key = os.getenv("CLERK_SECRET_KEY")
         
         # Database settings
@@ -76,7 +77,8 @@ def get_settings() -> Settings:
             logger.warning("Using minimal settings for development")
             # Create minimal settings object without validation
             minimal = Settings.__new__(Settings)
-            minimal.groq_api_key = os.getenv("GROQ_API_KEY", "")
+            minimal.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+            minimal.gemini_model=os.getenv("GEMINI_MODEL","")
             minimal.clerk_secret_key = os.getenv("CLERK_SECRET_KEY")
             minimal.storage_backend = "local"
             minimal.environment = "development"

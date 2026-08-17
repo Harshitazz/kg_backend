@@ -10,7 +10,6 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from typing import Dict
 from cache import get_cached_query, cache_query
-from langchain_groq import ChatGroq
 from services.kg_service import process_documents_for_kg
 from services.qdrant_service import create_vectorstore_for_task
 
