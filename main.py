@@ -105,15 +105,20 @@ async def startup_event():
         return
 
     try:
-        llm = ChatGoogleGenerativeAI(
+        kg_llm = ChatGoogleGenerativeAI(
             model=settings.gemini_model,
             google_api_key=settings.gemini_api_key,
             temperature=0,
             response_mime_type="application/json",
         )
+        llm = ChatGoogleGenerativeAI(
+            model=settings.gemini_model,
+            google_api_key=settings.gemini_api_key,
+            temperature=0.6,
+        )
         set_pdf_llm(llm)
         set_url_llm(llm)
-        set_kg_llm(llm)
+        set_kg_llm(kg_llm)
         logging.info("LLM initialized successfully")
     except Exception as e:
         logging.exception(f"LLM initialization failed: {e}")

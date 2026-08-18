@@ -33,22 +33,35 @@ except ImportError:
     print("Warning: pytesseract/Pillow not available, OCR fallback disabled")
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-DEFAULT_SEARCH_K = 4
-DEFAULT_PROMPT_TEMPLATE = """Use the following context to answer the question.
-    Rules:
-    - Do NOT mention document IDs, UUIDs, or internal references.
-    - Do NOT mention phrases like "document with id".
-    - Refer to documents only by their source name or page number.
-    - If the answer can be inferred by combining information from multiple documents, do so.
-    - If the information is truly missing, say "I don't know".
+DEFAULT_SEARCH_K = 8
+DEFAULT_PROMPT_TEMPLATE = """You are the answer-generation component of a Knowledge Graph and semantic document retrieval system.
 
+Answer the user's question using BOTH:
+1. The retrieved document chunks.
+2. The knowledge graph context.
 
-    Context:
-    {context}
+Important:
+- The answer may require combining information from multiple document chunks.
+- The answer may require connecting concepts through relationships in the knowledge graph.
+- Do not require the exact wording of the question to appear in a document.
+- If multiple pieces of context together support the answer, synthesize them.
+- Do not invent facts that are not supported by the provided context.
+- Give a concise but complete answer.
+- When useful, explain the relationship between concepts step-by-step.
+- Mention the relevant document filename when useful.
+- Do not mention internal IDs, UUIDs, task IDs, or database implementation details.
 
-    Question: {question}
+Only say:
+"I couldn't find this information in the provided documents."
+if the provided document chunks AND knowledge graph context genuinely contain no information that can answer the question.
 
-    Answer:"""
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:"""
 
 _embedding_model = None
 
@@ -383,7 +396,7 @@ async def ask_pdf_endpoint(request: AskPDFRequest, request_user: Dict[str, str],
     
     # Query Knowledge Graph for additional context
     from services.kg_service import query_kg_for_question
-    kg_context = query_kg_for_question(question, user_id, task_ids=task_ids if task_ids else None)
+    kg_context = query_kg_for_question(question, user_id, task_ids=valid_task_ids if valid_task_ids else None)
 
     if not question:
         raise HTTPException(status_code=400, detail="No question provided.")
@@ -456,7 +469,13 @@ async def ask_pdf_endpoint(request: AskPDFRequest, request_user: Dict[str, str],
         | llm
         | StrOutputParser()
     )
-
+    logger.info("=" * 80)
+    logger.info("QUESTION: %s", question)
+    logger.info("QDRANT DOC COUNT: %d", len(unique_docs))
+    logger.info("KG CONTEXT LENGTH: %d", len(kg_context or ""))
+    logger.info("FORMATTED CONTEXT LENGTH: %d", len(formatted_context))
+    logger.info("FORMATTED CONTEXT PREVIEW:\n%s", formatted_context[:12000])
+    logger.info("=" * 80)
     answer = chain.invoke({
         "context": formatted_context,
         "question": question

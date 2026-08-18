@@ -755,6 +755,58 @@ def get_knowledge_graph_history(user_id: str) -> List[Dict[str, Any]]:
     finally:
         driver.close()
 
+
+def extract_llm_text(content) -> str:
+    """
+    Normalize LangChain/Gemini message content into a plain string.
+    Handles string, list of content blocks, and dict responses.
+    """
+    if content is None:
+        return ""
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        text_parts = []
+
+        for item in content:
+            if isinstance(item, str):
+                text_parts.append(item)
+
+            elif isinstance(item, dict):
+                # Gemini/LangChain content block
+                text = item.get("text")
+                if isinstance(text, str):
+                    text_parts.append(text)
+
+                # Some providers may use content
+                elif isinstance(item.get("content"), str):
+                    text_parts.append(item["content"])
+
+            else:
+                # Handle object-like content blocks
+                text = getattr(item, "text", None)
+                if isinstance(text, str):
+                    text_parts.append(text)
+
+        return "\n".join(text_parts).strip()
+
+    if isinstance(content, dict):
+        text = content.get("text")
+        if isinstance(text, str):
+            return text
+
+        text = content.get("content")
+        if isinstance(text, str):
+            return text
+
+        text = content.get("explanation")
+        if isinstance(text, str):
+            return text
+
+    return str(content)
+
 def get_node_explanation(node_name: str, user_id: str, task_id: Optional[str] = None) -> str:
     """
     Generate explanation for a node using LLM based on its relationships, connections, and embedding context
@@ -893,7 +945,8 @@ Entity Information:
 
 Provide a clear, context-rich explanation that combines the document context with the graph structure:"""
             
-            explanation = llm.invoke(prompt).content
+            response = llm.invoke(prompt).content
+            explanation = extract_llm_text(response)
             return explanation
     
     except Exception as e:
@@ -943,7 +996,8 @@ Format: ["term1", "term2", "term3"]
 Terms:"""
             
             try:
-                entity_result = llm.invoke(entity_extraction_prompt).content
+                response = llm.invoke(entity_extraction_prompt)
+                entity_result = extract_llm_text(response.content)
                 # Try to parse JSON from response
                 import json
                 import re
@@ -1075,7 +1129,8 @@ Format: ["term1", "term2", "term3"]
 Terms:"""
             
             try:
-                entity_result = llm.invoke(entity_extraction_prompt).content
+                response = llm.invoke(entity_extraction_prompt)
+                entity_result = extract_llm_text(response.content)
                 import json
                 import re
                 json_match = re.search(r'\[.*?\]', entity_result, re.DOTALL)

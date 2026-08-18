@@ -5,7 +5,7 @@ import os
 import logging
 from typing import List, Optional, Dict, Any
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, Filter, FieldCondition, MatchValue
+from qdrant_client.models import Distance, VectorParams, Filter, FieldCondition, MatchValue,PayloadSchemaType
 from langchain_qdrant import QdrantVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
@@ -100,7 +100,6 @@ def create_vectorstore_for_task(
         collection_exists = any(c.name == collection_name for c in collections)
         
         if not collection_exists:
-            # Create collection
             client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(
@@ -111,6 +110,25 @@ def create_vectorstore_for_task(
             logger.info(f"Created Qdrant collection: {collection_name}")
         else:
             logger.info(f"Using existing Qdrant collection: {collection_name}")
+
+        # Create payload indexes required for filtered searches.
+        # This also fixes existing collections.
+        for field_name in ("user_id", "task_id"):
+            try:
+                client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field_name,
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+                logger.info(
+                    f"Ensured Qdrant payload index: "
+                    f"{collection_name}.{field_name}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Could not create/ensure index for "
+                    f"{collection_name}.{field_name}: {e}"
+                )
     except Exception as e:
         logger.warning(f"Collection {collection_name} operation issue: {str(e)}")
         # Try to continue anyway
@@ -186,7 +204,7 @@ def query_vectorstore_multi_task(
             docs = vectorstore.similarity_search(
                 question,
                 k=k,
-                filter=qdrant_filter
+                # filter=qdrant_filter
             )
             
             all_documents.extend(docs)
