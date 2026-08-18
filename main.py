@@ -108,8 +108,8 @@ async def startup_event():
         llm = ChatGoogleGenerativeAI(
             model=settings.gemini_model,
             google_api_key=settings.gemini_api_key,
-            temperature=0.9,
-            max_tokens=1024,
+            temperature=0,
+            response_mime_type="application/json",
         )
         set_pdf_llm(llm)
         set_url_llm(llm)
